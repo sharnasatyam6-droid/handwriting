@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Humanly AI | Your Writing Workspace</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <header class="navbar">
+
+        <div class="logo">
+            <span class="logo-icon">H</span>
+            <span>HUMANLY<span class="highlight"> AI</span></span>
+        </div>
+
+        <div class="nav-right">
+            <span class="status-dot"></span>
+            <span class="status-text">Workspace Ready</span>
+        </div>
+
+    </header>
+
+
+    <!-- Main Content -->
+    <main class="container">
+
+        <!-- Hero Section -->
+        <section class="hero">
+
+            <div class="badge">
+                ✦ YOUR PERSONAL WRITING WORKSPACE
+            </div>
+
+            <h1>
+                Your content.<br>
+                <span class="gradient-text">Your writing style.</span>
+            </h1>
+
+            <p class="hero-description">
+                Transform your digital text into handwriting-style pages.
+                Upload your paper, enter your content, and create your preview.
+            </p>
+
+        </section>
+
+
+        <!-- Workspace -->
+        <section class="workspace">
+
+            <!-- Left Panel -->
+            <div class="panel input-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <span class="step-label">STEP 01</span>
+                        <h2>Set Up Your Page</h2>
+                    </div>
+
+                    <span class="panel-icon">▧</span>
+                </div>
+
+
+                <!-- Paper Upload -->
+                <label for="paperUpload" class="upload-box" id="uploadBox">
+
+                    <input
+                        type="file"
+                        id="paperUpload"
+                        accept="image/png,image/jpeg,image/webp"
+                        hidden
+                    >
+
+                    <div class="upload-icon">↑</div>
+
+                    <h3>Upload your notebook page</h3>
+
+                    <p>Click to browse or select an image</p>
+
+                    <span class="file-hint">PNG, JPG or WEBP</span>
+
+                </label>
+
+
+                <!-- Content Input -->
+                <div class="field-group">
+
+                    <div class="field-heading">
+                        <label for="contentInput">Your Content</label>
+                        <span id="wordCount">0 words</span>
+                    </div>
+
+                    <textarea
+                        id="contentInput"
+                        placeholder="Paste the text you want to place on your page..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- Handwriting Style -->
+                <div class="field-group">
+
+                    <label for="fontSelector">Handwriting Style</label>
+
+                    <select id="fontSelector">
+
+                        <option value="cursive">Classic Cursive</option>
+
+                        <option value="casual">Casual Handwriting</option>
+
+                        <option value="neat">Neat Handwriting</option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Font Size -->
+                <div class="field-group">
+
+                    <div class="field-heading">
+                        <label for="fontSize">Writing Size</label>
+                        <span id="fontSizeValue">20 px</span>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="fontSize"
+                        min="12"
+                        max="30"
+                        value="20"
+                    >
+
+                </div>
+
+
+                <!-- Generate Button -->
+                <button id="generateBtn" class="primary-button">
+
+                    <span>✦</span>
+                    Generate Preview
+                    <span class="button-arrow">→</span>
+
+                </button>
+
+                <p class="helper-text">
+                    Your original content stays editable.
+                </p>
+
+            </div>
+
+
+            <!-- Right Panel -->
+            <div class="panel preview-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+                        <span class="step-label">STEP 02</span>
+                        <h2>Live Preview</h2>
+                    </div>
+
+                    <span class="preview-status" id="previewStatus">
+                        Waiting for input
+                    </span>
+
+                </div>
+
+
+                <!-- Preview Area -->
+                <div class="preview-area" id="previewArea">
+
+                    <div class="empty-state" id="emptyState">
+
+                        <div class="empty-icon">▤</div>
+
+                        <h3>Your page will appear here</h3>
+
+                        <p>
+                            Upload a notebook page and enter your content
+                            to get started.
+                        </p>
+
+                    </div>
+
+
+                    <!-- Rendered Page -->
+                    <div class="paper-preview" id="paperPreview">
+
+                        <img
+                            id="paperImage"
+                            class="paper-image"
+                            alt="Uploaded notebook page"
+                            hidden
+                        >
+
+                        <div id="renderedText" class="rendered-text"></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Preview Actions -->
+                <div class="preview-footer">
+
+                    <div class="page-info" id="pageInfo">
+                        No page uploaded
+                    </div>
+
+                    <button
+                        id="downloadBtn"
+                        class="secondary-button"
+                        disabled
+                    >
+                        ↓ Export PDF
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Footer -->
+        <footer class="footer">
+
+            <p>
+                HUMANLY AI
+                <span>·</span>
+                Your ideas, beautifully presented.
+            </p>
+
+        </footer>
+
+    </main>
+
+
+    <script src="js/script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
+
+</body>
+
+</html>
