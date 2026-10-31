@@ -11,6 +11,8 @@ const samplePreviewWrap = $("samplePreviewWrap");
 const sampleImage = $("sampleImage");
 const sampleName = $("sampleName");
 const removeSampleBtn = $("removeSampleBtn");
+const downloadSheetBtn = $("downloadSheetBtn");
+const handwritingStatus = $("handwritingStatus");
 const pageFilesList = $("pageFilesList");
 const contentInput = $("contentInput");
 const wordCount = $("wordCount");
@@ -44,11 +46,14 @@ let pageURLs = [];
 let sampleURL = null;
 let generatedPages = [];
 let currentPageIndex = 0;
+let handwritingGlyphs = new Map();
+const CALIBRATION_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?!\'-+=()";
 
 const FONT_MAP = {
   cursive: { css: '"Caveat", cursive', canvas: '"Caveat"' },
   casual: { css: '"Patrick Hand", cursive', canvas: '"Patrick Hand"' },
-  neat: { css: '"Kalam", cursive', canvas: '"Kalam"' }
+  neat: { css: '"Kalam", cursive', canvas: '"Kalam"' },
+  personal: { css: '"Patrick Hand", cursive', canvas: '"Patrick Hand"' }
 };
 
 function showError(message) {
@@ -102,7 +107,7 @@ autoAlign.addEventListener("change", () => { alignmentStatus.textContent = autoA
 fontSize.addEventListener("input", () => { updateFontControls(); markPreviewStale(); });
 lineSpacing.addEventListener("input", () => { updateFontControls(); markPreviewStale(); });
 
-sampleUpload.addEventListener("change", () => {
+sampleUpload.addEventListener("change", async () => {
   clearError();
   const file = sampleUpload.files && sampleUpload.files[0];
   if (!file) return;
@@ -118,14 +123,38 @@ sampleUpload.addEventListener("change", () => {
   sampleName.textContent = file.name;
   samplePreviewWrap.hidden = false;
   sampleUploadBox.hidden = true;
+  handwritingStatus.textContent = "Reading your handwriting sheet… keep this tab open.";
+  try {
+    const image = await loadImage(sampleURL);
+    const result = extractHandwritingGlyphs(image);
+    handwritingGlyphs = result.glyphs;
+    if (handwritingGlyphs.size < 12) {
+      handwritingGlyphs = new Map();
+      throw new Error("I couldn't find enough handwritten characters. Please upload a clear photo of the entire printed sheet, with all boxes visible.");
+    }
+    fontSelector.value = "personal";
+    updateFontControls();
+    markPreviewStale();
+    const missing = CALIBRATION_CHARS.split("").filter((char) => !handwritingGlyphs.has(char));
+    handwritingStatus.textContent = "Your handwriting is ready: " + handwritingGlyphs.size + " of " + CALIBRATION_CHARS.length + " characters detected." + (missing.length ? " Some unclear characters will use a fallback handwriting style." : "");
+    if (contentInput.value.trim() && pageURLs.length) await generatePreview();
+  } catch (error) {
+    handwritingStatus.textContent = "Couldn't read that sheet. Try a brighter, straight-on photo with the whole page visible.";
+    showError(error.message || "Couldn't extract your handwriting. Please try another image.");
+  }
 });
 removeSampleBtn.addEventListener("click", () => {
   if (sampleURL) URL.revokeObjectURL(sampleURL);
   sampleURL = null;
+  handwritingGlyphs = new Map();
   sampleImage.removeAttribute("src");
   sampleUpload.value = "";
   samplePreviewWrap.hidden = true;
   sampleUploadBox.hidden = false;
+  handwritingStatus.textContent = "Upload a completed handwriting sheet to personalize the generated text.";
+  if (fontSelector.value === "personal") fontSelector.value = "casual";
+  updateFontControls();
+  markPreviewStale();
 });
 
 paperUpload.addEventListener("change", () => {
@@ -162,6 +191,168 @@ function renderFileList() {
     pageFilesList.append(row);
   });
   pageFilesList.hidden = pageFiles.length === 0;
+}
+
+// The printable sheet uses a fixed A4 grid. Upload a flat, full-page photo/scan for best extraction.
+downloadSheetBtn.addEventListener("click", () => {
+  clearError();
+  const library = window.jspdf;
+  if (!library || !library.jsPDF) {
+    showError("The PDF library hasn't loaded. Check your internet connection and reload the page.");
+    return;
+  }
+  const { jsPDF } = library;
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+  const startX = 18, startY = 35, cellW = 29, cellH = 19, columns = 6;
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(17);
+  pdf.setTextColor(30, 30, 45);
+  pdf.text("HUMANLY AI — MY HANDWRITING", 105, 16, { align: "center" });
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(85, 85, 100);
+  pdf.text("Write each character once, naturally, inside its box. Keep the full page visible when taking a photo.", 105, 23, { align: "center" });
+  pdf.text("Use dark pen or pencil. Do not write over the small character label.", 105, 28, { align: "center" });
+  CALIBRATION_CHARS.split("").forEach((char, index) => {
+    const col = index % columns, row = Math.floor(index / columns);
+    const x = startX + col * cellW, y = startY + row * cellH;
+    pdf.setDrawColor(205, 207, 220);
+    pdf.setLineWidth(0.2);
+    pdf.rect(x, y, cellW, cellH);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(125, 125, 140);
+    pdf.text(char === "'" ? "apostrophe" : char, x + 2, y + 3.6);
+  });
+  pdf.setFontSize(7);
+  pdf.setTextColor(100, 100, 115);
+  pdf.text("Tip: Keep letters separate. This first version learns individual characters, not connected cursive strokes.", 105, 272, { align: "center" });
+  pdf.save("humanly-ai-my-handwriting-sheet.pdf");
+});
+
+function extractHandwritingGlyphs(image) {
+  const sheetW = 1000, sheetH = Math.round(sheetW * 297 / 210);
+  const normalized = document.createElement("canvas");
+  normalized.width = sheetW;
+  normalized.height = sheetH;
+  const nctx = normalized.getContext("2d", { willReadFrequently: true });
+  nctx.fillStyle = "#fff";
+  nctx.fillRect(0, 0, sheetW, sheetH);
+  nctx.drawImage(image, 0, 0, sheetW, sheetH);
+
+  const glyphs = new Map();
+  const startX = 18 / 210 * sheetW, startY = 35 / 297 * sheetH;
+  const cellW = 29 / 210 * sheetW, cellH = 19 / 297 * sheetH;
+  const columns = 6;
+  CALIBRATION_CHARS.split("").forEach((char, index) => {
+    const col = index % columns, row = Math.floor(index / columns);
+    const x = Math.round(startX + col * cellW + cellW * 0.10);
+    const y = Math.round(startY + row * cellH + cellH * 0.27);
+    const w = Math.round(cellW * 0.80), h = Math.round(cellH * 0.58);
+    const crop = document.createElement("canvas");
+    crop.width = w; crop.height = h;
+    const cctx = crop.getContext("2d", { willReadFrequently: true });
+    cctx.drawImage(normalized, x, y, w, h, 0, 0, w, h);
+    const pixels = cctx.getImageData(0, 0, w, h);
+    let minX = w, minY = h, maxX = -1, maxY = -1;
+    for (let py = 0; py < h; py++) {
+      for (let px = 0; px < w; px++) {
+        const p = (py * w + px) * 4;
+        const r = pixels.data[p], g = pixels.data[p + 1], b = pixels.data[p + 2];
+        const brightness = (r + g + b) / 3;
+        const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+        if (brightness < 165 || (brightness < 195 && chroma > 35)) {
+          minX = Math.min(minX, px); minY = Math.min(minY, py);
+          maxX = Math.max(maxX, px); maxY = Math.max(maxY, py);
+        }
+      }
+    }
+    if (maxX - minX < 2 || maxY - minY < 3) return;
+    const pad = 2;
+    minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+    maxX = Math.min(w - 1, maxX + pad); maxY = Math.min(h - 1, maxY + pad);
+    const gw = maxX - minX + 1, gh = maxY - minY + 1;
+    const glyph = document.createElement("canvas");
+    glyph.width = gw; glyph.height = gh;
+    const gctx = glyph.getContext("2d");
+    const out = gctx.createImageData(gw, gh);
+    for (let gy = 0; gy < gh; gy++) {
+      for (let gx = 0; gx < gw; gx++) {
+        const src = ((gy + minY) * w + (gx + minX)) * 4;
+        const dst = (gy * gw + gx) * 4;
+        const r = pixels.data[src], g = pixels.data[src + 1], b = pixels.data[src + 2];
+        const brightness = (r + g + b) / 3;
+        const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+        const strength = brightness < 165 ? (165 - brightness) / 165 : (brightness < 195 && chroma > 35 ? (195 - brightness) / 195 : 0);
+        out.data[dst] = 0; out.data[dst + 1] = 0; out.data[dst + 2] = 0;
+        out.data[dst + 3] = Math.max(0, Math.min(255, Math.round(strength * 255)));
+      }
+    }
+    gctx.putImageData(out, 0, 0);
+    glyphs.set(char, { canvas: glyph, aspect: gw / gh });
+  });
+  return { glyphs };
+}
+
+function personalCharacterWidth(char, size, measure) {
+  if (char === " ") return size * 0.34;
+  const glyph = handwritingGlyphs.get(char);
+  if (!glyph) return Math.max(size * 0.25, measure.measureText(char).width);
+  return Math.max(size * 0.22, Math.min(size * 1.25, glyph.aspect * size * 0.78)) + size * 0.035;
+}
+function wrapPersonalizedText(measure, text, maxWidth, size) {
+  const lines = [];
+  for (const paragraph of text.split(/\r?\n/u)) {
+    if (!paragraph.trim()) { lines.push(""); continue; }
+    let line = "", width = 0;
+    for (const word of paragraph.trim().split(/\s+/u)) {
+      let wordWidth = 0;
+      for (const char of word) wordWidth += personalCharacterWidth(char, size, measure);
+      const spaceWidth = line ? personalCharacterWidth(" ", size, measure) : 0;
+      if (line && width + spaceWidth + wordWidth > maxWidth) {
+        lines.push(line); line = word; width = wordWidth;
+      } else {
+        line += (line ? " " : "") + word;
+        width += spaceWidth + wordWidth;
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+const tintedGlyphCache = new Map();
+function drawPersonalizedLine(ctx, line, x, y, size, maxWidth, baselineMode) {
+  let cursor = x;
+  const glyphHeight = size * 0.82;
+  const baseline = baselineMode === "alphabetic" ? y : y + glyphHeight;
+  for (const char of line) {
+    if (char === " ") { cursor += size * 0.34; continue; }
+    const glyph = handwritingGlyphs.get(char);
+    if (!glyph) {
+      ctx.font = getCanvasFont(size);
+      ctx.textBaseline = baselineMode;
+      ctx.fillText(char, cursor, y);
+      cursor += Math.max(size * 0.25, ctx.measureText(char).width) + size * 0.035;
+      continue;
+    }
+    const drawH = glyphHeight;
+    const drawW = Math.max(size * 0.22, Math.min(size * 1.25, glyph.aspect * drawH));
+    const cacheKey = inkColor.value + "|" + char;
+    let tinted = tintedGlyphCache.get(cacheKey);
+    if (!tinted) {
+      tinted = document.createElement("canvas");
+      tinted.width = glyph.canvas.width; tinted.height = glyph.canvas.height;
+      const tctx = tinted.getContext("2d");
+      tctx.drawImage(glyph.canvas, 0, 0);
+      tctx.globalCompositeOperation = "source-in";
+      tctx.fillStyle = inkColor.value;
+      tctx.fillRect(0, 0, tinted.width, tinted.height);
+      tintedGlyphCache.set(cacheKey, tinted);
+    }
+    ctx.drawImage(tinted, cursor, baseline - drawH, drawW, drawH);
+    cursor += drawW + size * 0.035;
+    if (cursor > x + maxWidth) break;
+  }
 }
 
 function loadImage(url) {
@@ -294,6 +485,9 @@ async function buildPages() {
   if (!content) throw new Error("Enter the content you want to place on the pages.");
   if (!pageURLs.length) throw new Error("Upload at least one notebook page first.");
 
+  if (fontSelector.value === "personal" && handwritingGlyphs.size < 12) {
+    throw new Error("To use your own handwriting, download the handwriting sheet, fill it in, and upload a clear photo first.");
+  }
   await document.fonts.ready;
   const images = await Promise.all(pageURLs.map(loadImage));
   const first = images[0];
@@ -330,7 +524,8 @@ async function buildPages() {
   const measuringCanvas = document.createElement("canvas");
   const measure = measuringCanvas.getContext("2d");
   measure.font = getCanvasFont(size);
-  const lines = wrapText(measure, content, usableWidth);
+  const usePersonal = fontSelector.value === "personal" && handwritingGlyphs.size >= 12;
+  const lines = usePersonal ? wrapPersonalizedText(measure, content, usableWidth, size) : wrapText(measure, content, usableWidth);
   const bottomPadding = Math.max(lineHeight, pageHeight * 0.06);
   const maxLines = Math.max(1, Math.floor((pageHeight - top - bottomPadding) / lineHeight) + 1);
   const chunks = [];
@@ -366,10 +561,9 @@ async function buildPages() {
     ctx.textBaseline = autoAlign.checked && layout && layout.hasRuling ? "alphabetic" : "top";
     ctx.textAlign = "left";
     chunks[pageIndex].forEach((line, lineIndex) => {
-      const y = ctx.textBaseline === "alphabetic"
-        ? pageTop + lineIndex * pageLineHeight
-        : pageTop + lineIndex * pageLineHeight;
-      ctx.fillText(line, pageSide, y, pageUsableWidth);
+      const y = pageTop + lineIndex * pageLineHeight;
+      if (usePersonal) drawPersonalizedLine(ctx, line, pageSide, y, size, pageUsableWidth, ctx.textBaseline);
+      else ctx.fillText(line, pageSide, y, pageUsableWidth);
     });
     result.push({
       dataURL: canvas.toDataURL("image/jpeg", 0.94),
