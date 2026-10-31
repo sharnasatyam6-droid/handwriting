@@ -1,253 +1,149 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Humanly AI | Your Writing Workspace</title>
-
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#08090f">
+  <meta name="description" content="Create handwriting-style pages from your text and notebook paper images.">
+  <title>Humanly AI | Your Writing Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Caveat:wght@400;500;600;700&family=Patrick+Hand&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
+  <header class="navbar">
+    <a class="logo" href="#" aria-label="Humanly AI home">
+      <span class="logo-icon">H</span>
+      <span>HUMANLY<span class="highlight"> AI</span></span>
+    </a>
+    <div class="nav-right"><span class="status-dot"></span><span class="status-text">Local workspace · Your files stay in this browser</span></div>
+  </header>
 
-    <!-- Navigation Bar -->
-    <header class="navbar">
+  <main class="container">
+    <section class="hero">
+      <div class="badge">✦ YOUR PERSONAL WRITING WORKSPACE</div>
+      <h1>Your content.<br><span class="gradient-text">Your writing style.</span></h1>
+      <p class="hero-description">Arrange your text on notebook pages with handwriting-style fonts. Preview the layout, adjust spacing, and export a multi-page PDF.</p>
+    </section>
 
-        <div class="logo">
-            <span class="logo-icon">H</span>
-            <span>HUMANLY<span class="highlight"> AI</span></span>
+    <section class="workspace">
+      <div class="panel input-panel">
+        <div class="panel-heading"><div><span class="step-label">STEP 01</span><h2>Set Up Your Pages</h2></div><span class="panel-icon">▧</span></div>
+
+        <div class="field-group upload-group">
+          <label class="field-label" for="sampleUpload">Handwriting sample <span class="optional-tag">OPTIONAL</span></label>
+          <label for="sampleUpload" class="upload-box compact-upload" id="sampleUploadBox">
+            <input type="file" id="sampleUpload" accept="image/png,image/jpeg,image/webp" hidden>
+            <div class="upload-icon">✍</div>
+            <h3>Upload a writing sample</h3>
+            <p>Use it as a visual reference while choosing a font</p>
+            <span class="file-hint">PNG, JPG or WEBP · Max 10 MB</span>
+          </label>
+          <div class="sample-preview-wrap" id="samplePreviewWrap" hidden>
+            <img id="sampleImage" alt="Uploaded handwriting sample">
+            <div class="sample-meta"><strong id="sampleName"></strong><button type="button" id="removeSampleBtn" class="text-button">Remove</button></div>
+          </div>
+          <p class="field-note">The sample helps you compare styles; this version does not learn or clone handwriting.</p>
         </div>
 
-        <div class="nav-right">
-            <span class="status-dot"></span>
-            <span class="status-text">Workspace Ready</span>
+        <div class="field-group upload-group">
+          <label class="field-label" for="paperUpload">Notebook pages <span class="optional-tag">MULTI-PAGE</span></label>
+          <label for="paperUpload" class="upload-box" id="uploadBox">
+            <input type="file" id="paperUpload" accept="image/png,image/jpeg,image/webp" multiple hidden>
+            <div class="upload-icon">↑</div>
+            <h3>Upload notebook page images</h3>
+            <p>Select one or more page photos</p>
+            <span class="file-hint">PNG, JPG or WEBP · Max 10 MB per image</span>
+          </label>
+          <div id="pageFilesList" class="file-list" hidden></div>
         </div>
 
-    </header>
-
-
-    <!-- Main Content -->
-    <main class="container">
-
-        <!-- Hero Section -->
-        <section class="hero">
-
-            <div class="badge">
-                ✦ YOUR PERSONAL WRITING WORKSPACE
-            </div>
-
-            <h1>
-                Your content.<br>
-                <span class="gradient-text">Your writing style.</span>
-            </h1>
-
-            <p class="hero-description">
-                Transform your digital text into handwriting-style pages.
-                Upload your paper, enter your content, and create your preview.
-            </p>
-
-        </section>
-
-
-        <!-- Workspace -->
-        <section class="workspace">
-
-            <!-- Left Panel -->
-            <div class="panel input-panel">
-
-                <div class="panel-heading">
-                    <div>
-                        <span class="step-label">STEP 01</span>
-                        <h2>Set Up Your Page</h2>
-                    </div>
-
-                    <span class="panel-icon">▧</span>
-                </div>
-
-
-                <!-- Paper Upload -->
-                <label for="paperUpload" class="upload-box" id="uploadBox">
-
-                    <input
-                        type="file"
-                        id="paperUpload"
-                        accept="image/png,image/jpeg,image/webp"
-                        hidden
-                    >
-
-                    <div class="upload-icon">↑</div>
-
-                    <h3>Upload your notebook page</h3>
-
-                    <p>Click to browse or select an image</p>
-
-                    <span class="file-hint">PNG, JPG or WEBP</span>
-
-                </label>
-
-
-                <!-- Content Input -->
-                <div class="field-group">
-
-                    <div class="field-heading">
-                        <label for="contentInput">Your Content</label>
-                        <span id="wordCount">0 words</span>
-                    </div>
-
-                    <textarea
-                        id="contentInput"
-                        placeholder="Paste the text you want to place on your page..."
-                    ></textarea>
-
-                </div>
-
-
-                <!-- Handwriting Style -->
-                <div class="field-group">
-
-                    <label for="fontSelector">Handwriting Style</label>
-
-                    <select id="fontSelector">
-
-                        <option value="cursive">Classic Cursive</option>
-
-                        <option value="casual">Casual Handwriting</option>
-
-                        <option value="neat">Neat Handwriting</option>
-
-                    </select>
-
-                </div>
-
-
-                <!-- Font Size -->
-                <div class="field-group">
-
-                    <div class="field-heading">
-                        <label for="fontSize">Writing Size</label>
-                        <span id="fontSizeValue">20 px</span>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="fontSize"
-                        min="12"
-                        max="30"
-                        value="20"
-                    >
-
-                </div>
-
-
-                <!-- Generate Button -->
-                <button id="generateBtn" class="primary-button">
-
-                    <span>✦</span>
-                    Generate Preview
-                    <span class="button-arrow">→</span>
-
-                </button>
-
-                <p class="helper-text">
-                    Your original content stays editable.
-                </p>
-
-            </div>
-
-
-            <!-- Right Panel -->
-            <div class="panel preview-panel">
-
-                <div class="panel-heading">
-
-                    <div>
-                        <span class="step-label">STEP 02</span>
-                        <h2>Live Preview</h2>
-                    </div>
-
-                    <span class="preview-status" id="previewStatus">
-                        Waiting for input
-                    </span>
-
-                </div>
-
-
-                <!-- Preview Area -->
-                <div class="preview-area" id="previewArea">
-
-                    <div class="empty-state" id="emptyState">
-
-                        <div class="empty-icon">▤</div>
-
-                        <h3>Your page will appear here</h3>
-
-                        <p>
-                            Upload a notebook page and enter your content
-                            to get started.
-                        </p>
-
-                    </div>
-
-
-                    <!-- Rendered Page -->
-                    <div class="paper-preview" id="paperPreview">
-
-                        <img
-                            id="paperImage"
-                            class="paper-image"
-                            alt="Uploaded notebook page"
-                            hidden
-                        >
-
-                        <div id="renderedText" class="rendered-text"></div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Preview Actions -->
-                <div class="preview-footer">
-
-                    <div class="page-info" id="pageInfo">
-                        No page uploaded
-                    </div>
-
-                    <button
-                        id="downloadBtn"
-                        class="secondary-button"
-                        disabled
-                    >
-                        ↓ Export PDF
-                    </button>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- Footer -->
-        <footer class="footer">
-
-            <p>
-                HUMANLY AI
-                <span>·</span>
-                Your ideas, beautifully presented.
-            </p>
-
-        </footer>
-
-    </main>
-
-
-    <script src="js/script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
-
+        <div class="field-group">
+          <div class="field-heading"><label for="contentInput">Your content</label><span id="wordCount">0 words</span></div>
+          <textarea id="contentInput" placeholder="Paste or type the content you want to arrange on your pages..." spellcheck="true"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="fontSelector">Handwriting style</label>
+          <select id="fontSelector">
+            <option value="cursive">Classic Cursive — Caveat</option>
+            <option value="casual">Casual Handwriting — Patrick Hand</option>
+            <option value="neat">Neat Handwriting — Kalam</option>
+          </select>
+          <div class="font-sample" id="fontSample">The quick brown fox jumps over the lazy dog.</div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-heading"><label for="fontSize">Writing size</label><span id="fontSizeValue">20 px</span></div>
+          <input type="range" id="fontSize" min="14" max="42" value="25">
+        </div>
+
+        <div class="field-group">
+          <div class="field-heading"><label for="lineSpacing">Line spacing</label><span id="lineSpacingValue">1.7×</span></div>
+          <input type="range" id="lineSpacing" min="12" max="24" value="17">
+        </div>
+
+        <div class="settings-grid">
+          <div class="field-group">
+            <label class="field-label" for="topMargin">Top margin (%)</label>
+            <input type="number" id="topMargin" min="3" max="30" value="10">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="sideMargin">Side margin (%)</label>
+            <input type="number" id="sideMargin" min="3" max="25" value="8">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="inkColor">Ink color</label>
+          <select id="inkColor">
+            <option value="#202020">Black</option>
+            <option value="#173b78">Blue</option>
+            <option value="#244d36">Green</option>
+          </select>
+        </div>
+
+        <button id="generateBtn" class="primary-button"><span>✦</span> Generate Preview <span class="button-arrow">→</span></button>
+        <p class="helper-text">Preview and export are generated in your browser. Review the result before using it.</p>
+        <p class="error-message" id="errorMessage" role="alert" hidden></p>
+      </div>
+
+      <div class="panel preview-panel">
+        <div class="panel-heading">
+          <div><span class="step-label">STEP 02</span><h2>Page Preview</h2></div>
+          <span class="preview-status" id="previewStatus">Waiting for input</span>
+        </div>
+
+        <div class="preview-area" id="previewArea">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">▤</div>
+            <h3>Your page will appear here</h3>
+            <p>Upload notebook paper and enter your content to generate a preview.</p>
+          </div>
+          <div class="paper-preview" id="paperPreview" hidden>
+            <img id="paperImage" class="paper-image" alt="Notebook page background">
+            <div id="renderedText" class="rendered-text"></div>
+          </div>
+        </div>
+
+        <div class="preview-navigation">
+          <button type="button" class="secondary-button" id="prevPageBtn" disabled>← Previous</button>
+          <span id="pageCounter">Page 0 of 0</span>
+          <button type="button" class="secondary-button" id="nextPageBtn" disabled>Next →</button>
+        </div>
+        <div class="preview-footer">
+          <div class="page-info" id="pageInfo">No page uploaded</div>
+          <button id="downloadBtn" class="secondary-button export-button" disabled>↓ Export PDF</button>
+        </div>
+        <p class="field-note preview-note">Tip: notebook photos work best when taken straight-on with the full page visible. Use the margin controls to line up the text.</p>
+      </div>
+    </section>
+
+    <footer class="footer"><p>HUMANLY AI <span>·</span> Your ideas, beautifully presented.</p><p class="footer-small">Handwriting-style typesetting tool · No handwriting cloning</p></footer>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
+  <script src="js/script.js"></script>
 </body>
-
 </html>
