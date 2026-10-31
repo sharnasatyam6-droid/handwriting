@@ -605,7 +605,6 @@ input[type="number"]:focus { border-color: var(--purple); }
 }
 
 
-/* Personal handwriting calibration sheet controls */
-.sheet-download-btn { width: 100%; margin: 0 0 10px; text-align: center; }
+/* Existing handwriting sample analysis */
 .sheet-instructions { margin: 0 0 12px; line-height: 1.7; }
 #handwritingStatus { color: #c4b5fd; }
