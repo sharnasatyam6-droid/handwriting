@@ -84,6 +84,14 @@
           <input type="range" id="lineSpacing" min="12" max="24" value="17">
         </div>
 
+        <div class="field-group auto-align-card">
+          <label class="auto-align-toggle" for="autoAlign">
+            <input type="checkbox" id="autoAlign" checked>
+            <span class="toggle-copy"><strong>Auto-align to notebook lines</strong><small>Detect ruled lines and the page's writing area from your uploaded photo.</small></span>
+          </label>
+          <p class="alignment-status" id="alignmentStatus" aria-live="polite">Automatic alignment is on. Detection runs when you generate a preview.</p>
+        </div>
+
         <div class="settings-grid">
           <div class="field-group">
             <label class="field-label" for="topMargin">Top margin (%)</label>
@@ -136,7 +144,7 @@
           <div class="page-info" id="pageInfo">No page uploaded</div>
           <button id="downloadBtn" class="secondary-button export-button" disabled>↓ Export PDF</button>
         </div>
-        <p class="field-note preview-note">Tip: notebook photos work best when taken straight-on with the full page visible. Use the margin controls to line up the text.</p>
+        <p class="field-note preview-note">Tip: enable auto-align to estimate notebook ruling and the writing area. You can turn it off for plain or unruled paper.</p>
       </div>
     </section>
 
