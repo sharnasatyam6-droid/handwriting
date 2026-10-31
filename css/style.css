@@ -603,3 +603,9 @@ input[type="number"]:focus { border-color: var(--purple); }
     font-size: 11px;
     line-height: 1.6;
 }
+
+
+/* Personal handwriting calibration sheet controls */
+.sheet-download-btn { width: 100%; margin: 0 0 10px; text-align: center; }
+.sheet-instructions { margin: 0 0 12px; line-height: 1.7; }
+#handwritingStatus { color: #c4b5fd; }
