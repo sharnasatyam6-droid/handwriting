@@ -559,3 +559,5 @@ input[type="number"]:focus { border-color: var(--purple); }
 .error-message { margin-top: 12px; padding: 10px; border: 1px solid #7f1d1d; background: #2a1118; color: #fecaca; border-radius: 8px; font-size: 12px; line-height: 1.5; }
 .footer-small { margin-top: 9px; letter-spacing: 0; font-size: 10px; opacity: .7; }
 @media (max-width: 500px) { .settings-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .preview-navigation .secondary-button { padding: 8px; font-size: 11px; } .paper-preview { width: 100%; } .rendered-text { font-size: 16px; } }
+
+.upload-box[hidden] { display: none !important; }
