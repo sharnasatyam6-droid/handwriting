@@ -24,7 +24,7 @@
     <section class="hero">
       <div class="badge">✦ YOUR PERSONAL WRITING WORKSPACE</div>
       <h1>Your content.<br><span class="gradient-text">Your writing style.</span></h1>
-      <p class="hero-description">Upload your own handwriting sample sheet, type your content, and render it onto your notebook pages. Preview the layout and export a multi-page PDF — all in your browser.</p>
+      <p class="hero-description">Upload a page you have already written. Humanly estimates its visual style, then applies an approximate look to new text on your notebook pages. Preview and export a multi-page PDF in your browser.</p>
     </section>
 
     <section class="workspace">
@@ -32,14 +32,13 @@
         <div class="panel-heading"><div><span class="step-label">STEP 01</span><h2>Set Up Your Pages</h2></div><span class="panel-icon">▧</span></div>
 
         <div class="field-group upload-group">
-          <label class="field-label" for="sampleUpload">Teach Humanly your handwriting <span class="optional-tag">PERSONALIZED</span></label>
-          <button type="button" id="downloadSheetBtn" class="secondary-button sheet-download-btn">↓ 1. Download my handwriting sheet</button>
-          <p class="field-note sheet-instructions">Print the sheet, write one character in every box using your normal handwriting, then upload a clear, straight-on photo or scan of the whole page.</p>
+          <label class="field-label" for="sampleUpload">1. Upload a page you have already written <span class="optional-tag">STYLE ANALYSIS</span></label>
+          <p class="field-note sheet-instructions">Choose a clear photo of your existing notes or assignment. You do not need to write anything new or fill a special sheet.</p>
           <label for="sampleUpload" class="upload-box compact-upload" id="sampleUploadBox">
             <input type="file" id="sampleUpload" accept="image/png,image/jpeg,image/webp" hidden>
             <div class="upload-icon">✍</div>
-            <h3>2. Upload your completed sheet</h3>
-            <p>Humanly will extract your handwritten characters</p>
+            <h3>Upload existing handwriting</h3>
+            <p>Humanly will analyze its visual characteristics</p>
             <span class="file-hint">PNG, JPG or WEBP · Max 10 MB</span>
           </label>
           <div class="sample-preview-wrap" id="samplePreviewWrap" hidden>
@@ -72,7 +71,7 @@
             <option value="cursive">Classic Cursive — Caveat</option>
             <option value="casual">Casual Handwriting — Patrick Hand</option>
             <option value="neat">Neat Handwriting — Kalam</option>
-            <option value="personal">My Handwriting — uploaded character sheet</option>
+            <option value="personal">Sample-inspired style — approximate</option>
           </select>
           <div class="font-sample" id="fontSample">The quick brown fox jumps over the lazy dog.</div>
         </div>
@@ -151,7 +150,7 @@
       </div>
     </section>
 
-    <footer class="footer"><p>HUMANLY AI <span>·</span> Your ideas, beautifully presented.</p><p class="footer-small">Personal character-sheet rendering · Processed locally in your browser</p></footer>
+    <footer class="footer"><p>HUMANLY AI <span>·</span> Your ideas, beautifully presented.</p><p class="footer-small">Sample-inspired style approximation · Image analysis runs locally in your browser</p></footer>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
