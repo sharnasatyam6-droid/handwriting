@@ -58,6 +58,14 @@ function showError(message) {
 function clearError() {
   showError("");
 }
+function markPreviewStale() {
+  if (!generatedPages.length) return;
+  generatedPages = [];
+  paperImage.removeAttribute("src");
+  updateNavigation();
+  pageInfo.textContent = "Settings changed — generate a fresh preview";
+  previewStatus.textContent = "Preview needs refresh";
+}
 function revokeURLs(urls) {
   urls.forEach((url) => URL.revokeObjectURL(url));
 }
@@ -87,11 +95,12 @@ function cleanNumber(input, fallback, min, max) {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 }
 
-contentInput.addEventListener("input", updateWordCount);
-fontSelector.addEventListener("change", updateFontControls);
-autoAlign.addEventListener("change", () => { alignmentStatus.textContent = autoAlign.checked ? "Automatic alignment is on. Detection runs when you generate a preview." : "Auto-align is off. Your manual margins and line spacing will be used."; });
-fontSize.addEventListener("input", updateFontControls);
-lineSpacing.addEventListener("input", updateFontControls);
+contentInput.addEventListener("input", () => { updateWordCount(); markPreviewStale(); });
+fontSelector.addEventListener("change", () => { updateFontControls(); markPreviewStale(); });
+autoAlign.addEventListener("change", () => { alignmentStatus.textContent = autoAlign.checked ? "Automatic alignment is on. Detection runs when you generate a preview." : "Auto-align is off. Your manual margins and line spacing will be used."; markPreviewStale(); });
+[topMargin, sideMargin, inkColor].forEach((control) => control.addEventListener("change", markPreviewStale));
+fontSize.addEventListener("input", () => { updateFontControls(); markPreviewStale(); });
+lineSpacing.addEventListener("input", () => { updateFontControls(); markPreviewStale(); });
 
 sampleUpload.addEventListener("change", () => {
   clearError();
