@@ -561,3 +561,45 @@ input[type="number"]:focus { border-color: var(--purple); }
 @media (max-width: 500px) { .settings-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .preview-navigation .secondary-button { padding: 8px; font-size: 11px; } .paper-preview { width: 100%; } .rendered-text { font-size: 16px; } }
 
 .upload-box[hidden] { display: none !important; }
+
+
+/* Automatic notebook-line alignment controls */
+.auto-align-card {
+    padding: 14px;
+    border: 1px solid #39304f;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #171323, #111321);
+}
+.auto-align-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    cursor: pointer;
+}
+.auto-align-toggle input {
+    width: 17px;
+    height: 17px;
+    margin-top: 2px;
+    flex: 0 0 auto;
+    accent-color: var(--purple);
+}
+.toggle-copy {
+    display: grid;
+    gap: 5px;
+}
+.toggle-copy strong {
+    font-size: 13px;
+    color: var(--text);
+}
+.toggle-copy small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+    font-weight: 400;
+}
+.alignment-status {
+    margin: 11px 0 0 28px;
+    color: #c4b5fd;
+    font-size: 11px;
+    line-height: 1.6;
+}
