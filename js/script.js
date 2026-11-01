@@ -349,98 +349,116 @@ async function buildPages() {
   const content = contentInput.value.trim();
   if (!content) throw new Error("Enter the content you want to place on the pages.");
   if (!pageURLs.length) throw new Error("Upload at least one notebook page first.");
-
   if (fontSelector.value === "personal" && !handwritingProfile) {
     throw new Error("Upload an existing handwriting sample first, or choose a built-in style.");
   }
+
   await document.fonts.ready;
   const images = await Promise.all(pageURLs.map(loadImage));
-  const first = images[0];
-  const pageWidth = first.naturalWidth;
-  const pageHeight = first.naturalHeight;
-  const size = Number(fontSize.value);
+  const baseImage = images[0];
+  const baseScale = Math.min(1, 2200 / Math.max(baseImage.naturalWidth, baseImage.naturalHeight));
+  const baseWidth = Math.max(1, Math.round(baseImage.naturalWidth * baseScale));
+  const baseHeight = Math.max(1, Math.round(baseImage.naturalHeight * baseScale));
+  const sizeSetting = Number(fontSize.value);
   const manualLeading = Number(lineSpacing.value) / 10;
-  const fallbackTop = cleanNumber(topMargin, 10, 3, 30) / 100 * pageHeight;
-  const fallbackSide = cleanNumber(sideMargin, 8, 3, 25) / 100 * pageWidth;
-  const layouts = images.map((image) => autoAlign.checked ? detectPageLayout(image) : null);
-  const firstLayout = layouts[0];
-  const hasDetectedRuling = Boolean(autoAlign.checked && firstLayout && firstLayout.hasRuling);
-  const lineHeight = hasDetectedRuling ? firstLayout.lineSpacing : size * manualLeading;
-  const top = hasDetectedRuling && firstLayout.firstLineY !== null
-    ? firstLayout.firstLineY
-    : fallbackTop;
-  const side = autoAlign.checked && firstLayout && firstLayout.hasRedMargin
-    ? Math.min(pageWidth * 0.35, firstLayout.leftMarginX + pageWidth * 0.025)
-    : fallbackSide;
-  const rightSide = fallbackSide;
-  const usableWidth = Math.max(40, pageWidth - side - rightSide);
-
-  if (autoAlign.checked) {
-    const messages = [];
-    if (hasDetectedRuling) messages.push(`ruled lines detected (~${Math.round(firstLayout.lineSpacing)} px apart)`);
-    else messages.push("no reliable ruling found; using your line-spacing setting");
-    if (firstLayout && firstLayout.hasRedMargin) messages.push("left margin detected");
-    else messages.push("using your side-margin setting");
-    alignmentStatus.textContent = `Auto-align: ${messages.join(" · ")}.`;
-  } else {
-    alignmentStatus.textContent = "Auto-align is off. Your manual margins and line spacing are being used.";
-  }
-
+  const topPercent = cleanNumber(topMargin, 10, 3, 30) / 100;
+  const sidePercent = cleanNumber(sideMargin, 8, 3, 25) / 100;
+  const baseLayout = autoAlign.checked ? detectPageLayout(baseImage) : null;
+  const baseLayoutScale = baseWidth / baseImage.naturalWidth;
+  const baseRuling = Boolean(baseLayout && baseLayout.hasRuling);
+  const baseLineHeight = baseRuling
+    ? baseLayout.lineSpacing * baseLayoutScale
+    : sizeSetting * (baseWidth / 1000) * manualLeading;
+  const baseTop = baseRuling && baseLayout.firstLineY !== null
+    ? baseLayout.firstLineY * baseLayoutScale
+    : baseHeight * topPercent;
+  const baseSide = baseLayout && baseLayout.hasRedMargin
+    ? Math.min(baseWidth * 0.35, baseLayout.leftMarginX * baseLayoutScale + baseWidth * 0.025)
+    : baseWidth * sidePercent;
+  const baseRight = baseWidth * sidePercent;
+  const usableWidth = Math.max(40, baseWidth - baseSide - baseRight);
   const measuringCanvas = document.createElement("canvas");
   const measure = measuringCanvas.getContext("2d");
-  measure.font = getCanvasFont(size);
-  const usePersonal = fontSelector.value === "personal" && Boolean(handwritingProfile);
+  let fontPx = sizeSetting * (baseWidth / 1000);
+  if (baseRuling) fontPx = Math.min(fontPx, baseLineHeight * 0.88);
+  measure.font = getCanvasFont(fontPx);
   const lines = wrapText(measure, content, usableWidth);
-  const bottomPadding = Math.max(lineHeight, pageHeight * 0.06);
-  const maxLines = Math.max(1, Math.floor((pageHeight - top - bottomPadding) / lineHeight) + 1);
-  const chunks = [];
-  for (let i = 0; i < lines.length; i += maxLines) {
-    chunks.push(lines.slice(i, i + maxLines));
-  }
 
   const result = [];
-  for (let pageIndex = 0; pageIndex < chunks.length; pageIndex++) {
-    const backgroundIndex = Math.min(pageIndex, images.length - 1);
-    const background = images[backgroundIndex];
-    const layout = layouts[backgroundIndex];
-    const pageTop = autoAlign.checked && layout && layout.hasRuling && layout.firstLineY !== null
-      ? layout.firstLineY
-      : fallbackTop;
-    const pageSide = autoAlign.checked && layout && layout.hasRedMargin
-      ? Math.min(pageWidth * 0.35, layout.leftMarginX + pageWidth * 0.025)
-      : fallbackSide;
-    const pageLineHeight = autoAlign.checked && layout && layout.hasRuling
-      ? layout.lineSpacing
-      : size * manualLeading;
-    const pageRight = fallbackSide;
-    const pageUsableWidth = Math.max(40, pageWidth - pageSide - pageRight);
+  let lineOffset = 0;
+  let outputIndex = 0;
+  const maxOutputPages = 100;
+  while (lineOffset < lines.length && outputIndex < maxOutputPages) {
+    const imageIndex = Math.min(outputIndex, images.length - 1);
+    const image = images[imageIndex];
+    const scale = Math.min(1, 2200 / Math.max(image.naturalWidth, image.naturalHeight));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const layout = autoAlign.checked ? detectPageLayout(image) : null;
+    const ruled = Boolean(layout && layout.hasRuling);
+    const lineHeight = ruled
+      ? layout.lineSpacing * scale
+      : sizeSetting * (width / 1000) * manualLeading;
+    let top = ruled && layout.firstLineY !== null
+      ? layout.firstLineY * scale
+      : height * topPercent;
+    let left = layout && layout.hasRedMargin
+      ? Math.min(width * 0.35, layout.leftMarginX * scale + width * 0.025)
+      : width * sidePercent;
+    const right = width * sidePercent;
+    top = Math.max(0, Math.min(height - 1, top));
+    left = Math.max(0, Math.min(width - 40, left));
+    const textWidth = Math.max(40, width - left - right);
+    let pageFontSize = sizeSetting * (width / 1000);
+    if (ruled) pageFontSize = Math.min(pageFontSize, lineHeight * 0.88);
+    const bottomPadding = Math.max(lineHeight, height * 0.04);
+    const maxLines = Math.max(1, Math.floor((height - top - bottomPadding) / Math.max(1, lineHeight)) + 1);
+    const pageLines = lines.slice(lineOffset, lineOffset + maxLines);
+
     const canvas = document.createElement("canvas");
-    canvas.width = pageWidth;
-    canvas.height = pageHeight;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, pageWidth, pageHeight);
-    ctx.drawImage(background, 0, 0, pageWidth, pageHeight);
-    ctx.font = getCanvasFont(size);
+    if (!ctx) throw new Error("Your browser could not create a page preview. Try a smaller image.");
+    ctx.drawImage(image, 0, 0, width, height);
+    ctx.font = getCanvasFont(pageFontSize);
     ctx.fillStyle = inkColor.value;
-    ctx.textBaseline = autoAlign.checked && layout && layout.hasRuling ? "alphabetic" : "top";
     ctx.textAlign = "left";
-    chunks[pageIndex].forEach((line, lineIndex) => {
-      const y = pageTop + lineIndex * pageLineHeight;
-      if (usePersonal && handwritingProfile.slant) {
+    ctx.textBaseline = ruled ? "alphabetic" : "top";
+    pageLines.forEach(function(line, index) {
+      const y = top + index * lineHeight;
+      if (fontSelector.value === "personal" && handwritingProfile && handwritingProfile.slant) {
         ctx.save();
-        ctx.translate(pageSide, y);
+        ctx.translate(left, y);
         ctx.transform(1, 0, handwritingProfile.slant, 1, 0, 0);
-        ctx.fillText(line, 0, 0, pageUsableWidth);
+        ctx.fillText(line, 0, 0, textWidth);
         ctx.restore();
-      } else ctx.fillText(line, pageSide, y, pageUsableWidth);
+      } else {
+        ctx.fillText(line, left, y, textWidth);
+      }
     });
     result.push({
       dataURL: canvas.toDataURL("image/jpeg", 0.94),
-      width: pageWidth,
-      height: pageHeight,
-      lines: chunks[pageIndex].length
+      width: width,
+      height: height,
+      lines: pageLines.length
     });
+    lineOffset += pageLines.length;
+    outputIndex++;
+  }
+  if (lineOffset < lines.length) {
+    throw new Error("This document is too long to render in one batch. Split the content into smaller sections.");
+  }
+
+  if (autoAlign.checked) {
+    const messages = [];
+    if (baseRuling) messages.push("ruled lines detected");
+    else messages.push("no reliable ruling found; using your line-spacing setting");
+    if (baseLayout && baseLayout.hasRedMargin) messages.push("left margin detected");
+    else messages.push("using your side-margin setting");
+    alignmentStatus.textContent = "Auto-align: " + messages.join(" · ") + ".";
+  } else {
+    alignmentStatus.textContent = "Auto-align is off. Your manual margins and line spacing are being used.";
   }
   return result;
 }
