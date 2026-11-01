@@ -479,6 +479,7 @@ async function buildPages() {
 async function generatePreview() {
   clearError();
   generateBtn.disabled = true;
+  resetBtn.disabled = true;
   generateBtn.textContent = "Preparing preview…";
   previewStatus.textContent = "Rendering pages";
   try {
@@ -496,6 +497,7 @@ async function generatePreview() {
     downloadBtn.disabled = true;
   } finally {
     generateBtn.disabled = false;
+    resetBtn.disabled = false;
     generateBtn.innerHTML = '<span>✦</span> Generate Preview <span class="button-arrow">→</span>';
   }
 }
