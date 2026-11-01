@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#08090f">
-  <meta name="description" content="Create handwriting-style pages from your text and notebook paper images.">
+  <meta name="description" content="Arrange typed text on notebook page photos, estimate visual traits from existing handwriting, preview pages and export a PDF locally.">
+  <meta name="color-scheme" content="dark">
   <title>Humanly AI | Your Writing Workspace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,7 +46,7 @@
             <img id="sampleImage" alt="Uploaded handwriting sample">
             <div class="sample-meta"><strong id="sampleName"></strong><button type="button" id="removeSampleBtn" class="text-button">Remove</button></div>
           </div>
-          <p class="field-note" id="handwritingStatus" aria-live="polite">Your handwriting is processed locally in this browser. A clear, flat photo gives the best results.</p>
+          <p class="field-note" id="handwritingStatus" aria-live="polite">Upload existing handwriting to estimate ink colour and a rough writing slant. Images are analyzed locally in this browser.</p>
         </div>
 
         <div class="field-group upload-group">
@@ -115,7 +116,8 @@
         </div>
 
         <button id="generateBtn" class="primary-button"><span>✦</span> Generate Preview <span class="button-arrow">→</span></button>
-        <p class="helper-text">Preview and export are generated in your browser. Review the result before using it.</p>
+        <p class="helper-text">Your images and text stay in this browser. The sample-inspired option is an approximation, not an exact handwriting clone.</p>
+        <button id="resetBtn" type="button" class="secondary-button reset-button">Reset workspace</button>
         <p class="error-message" id="errorMessage" role="alert" hidden></p>
       </div>
 
@@ -150,7 +152,7 @@
       </div>
     </section>
 
-    <footer class="footer"><p>HUMANLY AI <span>·</span> Your ideas, beautifully presented.</p><p class="footer-small">Sample-inspired style approximation · Image analysis runs locally in your browser</p></footer>
+    <footer class="footer"><p>HUMANLY AI <span>·</span> Your ideas, beautifully presented.</p><p class="footer-small">Local image processing · Sample-inspired style approximation · No account required</p></footer>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
