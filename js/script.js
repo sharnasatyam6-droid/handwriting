@@ -123,10 +123,9 @@ sampleUpload.addEventListener("change", async () => {
     handwritingProfile = analyzeHandwritingStyle(image);
     fontSelector.value = "personal";
     if (handwritingProfile.ink) inkColor.value = handwritingProfile.ink;
-    if (handwritingProfile.lineSpacing) lineSpacing.value = String(Math.max(12, Math.min(24, Math.round(handwritingProfile.lineSpacing * 10))));
     updateFontControls();
     markPreviewStale();
-    handwritingStatus.textContent = "Sample analyzed. Humanly approximates its ink tone, spacing and slant using a handwriting font. This is not an exact copy of your handwriting.";
+    handwritingStatus.textContent = "Sample analyzed. Humanly estimates ink colour and a rough slant, then applies a handwriting font. This is a visual approximation, not an exact copy of your handwriting.";
     if (contentInput.value.trim() && pageURLs.length) await generatePreview();
   } catch (error) {
     handwritingProfile = null;
@@ -142,7 +141,7 @@ removeSampleBtn.addEventListener("click", () => {
   sampleUpload.value = "";
   samplePreviewWrap.hidden = true;
   sampleUploadBox.hidden = false;
-  handwritingStatus.textContent = "Upload a photo of existing handwriting to estimate its visual style.";
+  handwritingStatus.textContent = "Upload a photo of existing handwriting to estimate ink colour and a rough writing slant.";
   if (fontSelector.value === "personal") fontSelector.value = "casual";
   updateFontControls();
   markPreviewStale();
@@ -188,36 +187,49 @@ function renderFileList() {
  // not model training or exact handwriting replication.
 function analyzeHandwritingStyle(image) {
   const canvas = document.createElement("canvas");
-  canvas.width = 360;
-  canvas.height = Math.max(1, Math.round(360 * image.naturalHeight / image.naturalWidth));
+  const sampleWidth = 360;
+  canvas.width = sampleWidth;
+  canvas.height = Math.max(1, Math.round(sampleWidth * image.naturalHeight / image.naturalWidth));
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Your browser could not analyze this image.");
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  let dark = 0, red = 0, green = 0, blue = 0;
-  const rows = new Uint16Array(canvas.height);
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  let dark = 0, blueInk = 0, greenInk = 0, diagonalRight = 0, diagonalLeft = 0;
+  const isDark = new Uint8Array(canvas.width * canvas.height);
   for (let y = 0; y < canvas.height; y++) {
     for (let x = 0; x < canvas.width; x++) {
       const p = (y * canvas.width + x) * 4;
-      const r = data[p], g = data[p + 1], b = data[p + 2];
-      if ((r + g + b) / 3 < 150) {
-        dark++; red += r; green += g; blue += b; rows[y]++;
+      const red = pixels[p], green = pixels[p + 1], blue = pixels[p + 2];
+      if ((red + green + blue) / 3 < 155) {
+        dark++;
+        isDark[y * canvas.width + x] = 1;
+        if (blue > red * 1.18 && blue > green * 1.05) blueInk++;
+        if (green > red * 1.12 && green > blue * 1.05) greenInk++;
       }
     }
   }
-  if (dark < 80) throw new Error("Not enough dark writing detected. Try a clear photo with stronger contrast.");
-  const active = [];
-  for (let y = 0; y < rows.length; y++) if (rows[y] > canvas.width * 0.008) active.push(y);
-  const gaps = [];
-  for (let i = 1; i < active.length; i++) {
-    const gap = active[i] - active[i - 1];
-    if (gap > 3 && gap < 24) gaps.push(gap);
+  if (dark < 80) throw new Error("Not enough handwriting was detected. Try a clearer photo with darker writing.");
+  for (let y = 0; y < canvas.height - 1; y += 1) {
+    for (let x = 1; x < canvas.width - 1; x += 1) {
+      const at = y * canvas.width + x;
+      if (!isDark[at]) continue;
+      if (isDark[at + canvas.width + 1]) diagonalRight++;
+      if (isDark[at + canvas.width - 1]) diagonalLeft++;
+    }
   }
-  gaps.sort((a, b) => a - b);
-  const r = red / dark, g = green / dark, b = blue / dark;
-  const ink = b + 8 < r && b + 5 < g ? "#173b78" : (g + 8 < r && g + 3 < b ? "#244d36" : "#202020");
-  return { ink, lineSpacing: gaps.length ? Math.max(1.2, Math.min(2.4, gaps[Math.floor(gaps.length / 2)] / 8)) : null, density: dark / (canvas.width * canvas.height), slant: 0.035 };
+  const diagonalTotal = diagonalRight + diagonalLeft;
+  const diagonalBias = diagonalTotal ? (diagonalRight - diagonalLeft) / diagonalTotal : 0;
+  const slant = Math.max(-0.06, Math.min(0.06, diagonalBias * 0.09));
+  let ink = "#202020";
+  if (blueInk > dark * 0.18) ink = "#173b78";
+  else if (greenInk > dark * 0.18) ink = "#244d36";
+  return {
+    ink: ink,
+    slant: slant,
+    density: dark / (canvas.width * canvas.height)
+  };
 }
 
 function loadImage(url) {
