@@ -37,6 +37,7 @@ const pageCounter = $("pageCounter");
 const prevPageBtn = $("prevPageBtn");
 const nextPageBtn = $("nextPageBtn");
 const downloadBtn = $("downloadBtn");
+const resetBtn = $("resetBtn");
 const errorMessage = $("errorMessage");
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -523,6 +524,44 @@ function updateNavigation() {
     downloadBtn.disabled = true;
   }
 }
+resetBtn.addEventListener("click", () => {
+  revokeURLs(pageURLs);
+  pageURLs = [];
+  pageFiles = [];
+  if (sampleURL) URL.revokeObjectURL(sampleURL);
+  sampleURL = null;
+  handwritingProfile = null;
+  generatedPages = [];
+  currentPageIndex = 0;
+  paperUpload.value = "";
+  sampleUpload.value = "";
+  contentInput.value = "";
+  fontSelector.value = "cursive";
+  fontSize.value = "25";
+  lineSpacing.value = "17";
+  topMargin.value = "10";
+  sideMargin.value = "8";
+  autoAlign.checked = true;
+  inkColor.value = "#202020";
+  sampleImage.removeAttribute("src");
+  samplePreviewWrap.hidden = true;
+  sampleUploadBox.hidden = false;
+  uploadBox.querySelector("h3").textContent = "Upload notebook page images";
+  uploadBox.querySelector("p").textContent = "Select one or more page photos";
+  pageFilesList.replaceChildren();
+  pageFilesList.hidden = true;
+  handwritingStatus.textContent = "Upload existing handwriting to estimate ink colour and a rough writing slant. Images are analyzed locally in this browser.";
+  alignmentStatus.textContent = "Automatic alignment is on. Detection runs when you generate a preview.";
+  pageInfo.textContent = "No page uploaded";
+  previewStatus.textContent = "Waiting for input";
+  renderedText.textContent = "";
+  paperImage.removeAttribute("src");
+  clearError();
+  updateWordCount();
+  updateFontControls();
+  updateNavigation();
+  markPreviewStale();
+});
 generateBtn.addEventListener("click", generatePreview);
 prevPageBtn.addEventListener("click", () => showPage(currentPageIndex - 1));
 nextPageBtn.addEventListener("click", () => showPage(currentPageIndex + 1));
