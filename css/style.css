@@ -608,3 +608,37 @@ input[type="number"]:focus { border-color: var(--purple); }
 /* Existing handwriting sample analysis */
 .sheet-instructions { margin: 0 0 12px; line-height: 1.7; }
 #handwritingStatus { color: #c4b5fd; }
+
+
+/* Workspace reset and polish */
+.reset-button {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    border-color: var(--border);
+    color: var(--muted);
+}
+.reset-button:hover {
+    border-color: var(--purple);
+    color: var(--text);
+}
+.upload-box:focus-within,
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--purple);
+    outline-offset: 3px;
+}
+.sample-preview-wrap img {
+    object-position: top center;
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
